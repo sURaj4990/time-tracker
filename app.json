@@ -1,25 +1,39 @@
 {
   "expo": {
-    "name": "time-tracker",
+    "name": "Time Tracker",
     "slug": "time-tracker",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "ios": {
-      "supportsTablet": true
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#4F46E5"
     },
     "android": {
+      "package": "com.yourname.timetracker",
+      "versionCode": 3,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      },
-      "predictiveBackGestureEnabled": false
+        "foregroundImage": "./assets/splash-icon.png",
+        "backgroundColor": "#4F46E5"
+      }
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    }
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#4F46E5"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#4F46E5"
+        }
+      ]
+    ]
   }
 }

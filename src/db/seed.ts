@@ -9,22 +9,27 @@ const DEFAULT_DOMAINS = [
 
 export async function seedDomains(): Promise<void> {
   const db = await getDb();
-  const row = await db.getFirstAsync<{ c: number }>('SELECT COUNT(*) AS c FROM domains');
-  if (row && row.c > 0) return; // already seeded
-
-  for (const d of DEFAULT_DOMAINS) {
-    const res = await db.runAsync(
-      'INSERT INTO domains (name, parent_id, color) VALUES (?, NULL, ?)',
-      d.name,
-      d.color
+  // Keep the seed atomic so a failed insert cannot leave a partial default list.
+  await db.withTransactionAsync(async () => {
+    const row = await db.getFirstAsync<{ c: number }>(
+      "SELECT COUNT(*) AS c FROM domains",
     );
-    for (const child of d.children) {
-      await db.runAsync(
-        'INSERT INTO domains (name, parent_id, color) VALUES (?, ?, ?)',
-        child,
-        res.lastInsertRowId,
-        d.color
+    if (row && row.c > 0) return;
+
+    for (const d of DEFAULT_DOMAINS) {
+      const res = await db.runAsync(
+        "INSERT INTO domains (name, parent_id, color) VALUES (?, NULL, ?)",
+        d.name,
+        d.color,
       );
+      for (const child of d.children) {
+        await db.runAsync(
+          "INSERT INTO domains (name, parent_id, color) VALUES (?, ?, ?)",
+          child,
+          res.lastInsertRowId,
+          d.color,
+        );
+      }
     }
-  }
+  });
 }

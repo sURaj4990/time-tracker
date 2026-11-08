@@ -1,7 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
-  NativeScrollEvent,
-  NativeSyntheticEvent,
   ScrollView,
   StyleSheet,
   Text,
@@ -9,8 +7,9 @@ import {
 } from "react-native";
 import type { ElementRef } from "react";
 import { useTheme } from "../theme/ThemeContext";
+import { getWheelIndex, WHEEL_ITEM_HEIGHT } from "../lib/wheel";
 
-export const ITEM_H = 44;
+export const ITEM_H = WHEEL_ITEM_HEIGHT;
 
 type Props = {
   values: number[];
@@ -31,8 +30,7 @@ export default function Wheel({
   const ref = useRef<ElementRef<typeof ScrollView>>(null);
   const indexFromValue = Math.max(0, values.indexOf(value));
 
-  // The index the wheel is showing right now. Updated while scrolling, so the
-  // highlighted item and the value stay in step with the finger.
+  // Keep the highlighted item in sync after scrolling without rendering every row per gesture.
   const [liveIndex, setLiveIndex] = useState(indexFromValue);
   const liveRef = useRef(indexFromValue);
 
@@ -45,24 +43,12 @@ export default function Wheel({
     }
   }, [indexFromValue]);
 
-  const indexAt = (y: number) =>
-    Math.min(values.length - 1, Math.max(0, Math.round(y / ITEM_H)));
-
-  // Runs on every frame while the finger moves, so the highlight tracks the scroll
-  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const i = indexAt(e.nativeEvent.contentOffset.y);
-    if (i !== liveRef.current) {
-      liveRef.current = i;
-      setLiveIndex(i);
-    }
-  };
-
-  // Snaps to the exact item once the scroll stops, and reports the value
-  const onSettle = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const i = indexAt(e.nativeEvent.contentOffset.y);
+  const onSettle = (offsetY: number) => {
+    if (values.length === 0) return;
+    const i = getWheelIndex(offsetY, values.length);
     liveRef.current = i;
     setLiveIndex(i);
-    ref.current?.scrollTo({ y: i * ITEM_H, animated: true });
+    ref.current?.scrollTo({ y: i * ITEM_H, animated: false });
     if (values[i] !== value) onChange(values[i]);
   };
 
@@ -77,14 +63,17 @@ export default function Wheel({
         showsVerticalScrollIndicator={false}
         snapToInterval={ITEM_H}
         decelerationRate="fast"
-        scrollEventThrottle={16}
         contentOffset={{ x: 0, y: indexFromValue * ITEM_H }}
         contentContainerStyle={{ paddingVertical: ITEM_H }}
-        onScroll={onScroll}
-        onMomentumScrollEnd={onSettle}
+        onMomentumScrollEnd={(e) =>
+          onSettle(e.nativeEvent.contentOffset.y)
+        }
         onScrollEndDrag={(e) => {
-          // Only settle here when the finger lifts without momentum
-          if (e.nativeEvent.velocity?.y === 0) onSettle(e);
+          // Avoid per-item React renders during the gesture; native scrolling stays smooth.
+          const velocity = e.nativeEvent.velocity?.y ?? 0;
+          if (Math.abs(velocity) < 0.01) {
+            onSettle(e.nativeEvent.contentOffset.y);
+          }
         }}
       >
         {values.map((v, i) => {

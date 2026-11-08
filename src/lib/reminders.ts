@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import { AndroidImportance } from "expo-notifications";
 import * as Notifications from "expo-notifications";
 import { getEntryDates } from "../db/queries";
 import { toLocalDate } from "./date";
@@ -35,7 +36,7 @@ export async function syncReminders(reminder: {
   if (Platform.OS === "android") {
     await Notifications.setNotificationChannelAsync(CHANNEL_ID, {
       name: "Daily reminders",
-      importance: Notifications.AndroidImportance.DEFAULT,
+      importance: AndroidImportance.DEFAULT,
     });
   }
 

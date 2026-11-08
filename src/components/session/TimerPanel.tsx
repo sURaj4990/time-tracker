@@ -56,7 +56,7 @@ export default function TimerPanel({
         multiline
         maxLength={200}
       />
-      <Text style={s.hint}>Sessions under one minute aren't saved.</Text>
+      <Text style={s.hint}>Sessions under one minute aren&apos;t saved.</Text>
     </View>
   );
 }

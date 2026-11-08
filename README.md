@@ -22,7 +22,7 @@ All data stays on your device. There is no account, no server, and no tracking.
 - [expo-sqlite](https://docs.expo.dev/versions/latest/sdk/sqlite/) for on-device storage
 - [React Navigation](https://reactnavigation.org) for tabs and stacks
 - [react-native-gifted-charts](https://github.com/Abhinayademy/react-native-gifted-charts) for charts
-- [Jest](https://jestjs.io) with `jest-expo` for tests
+- [Vitest](https://vitest.dev) for unit tests
 
 ## Getting started
 

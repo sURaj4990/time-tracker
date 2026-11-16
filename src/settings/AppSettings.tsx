@@ -32,7 +32,8 @@ async function readJson<T>(key: string, fallback: T): Promise<T> {
   if (!raw) return fallback;
   try {
     return { ...fallback, ...JSON.parse(raw) } as T;
-  } catch {
+  } catch (error) {
+    console.warn(`Ignoring invalid saved setting "${key}"`, error);
     return fallback;
   }
 }
@@ -74,17 +75,25 @@ export function AppSettingsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    reload();
+    void reload().catch((error) => {
+      console.error("Failed to load app settings", error);
+    });
   }, [reload]);
 
   // Rebuilds reminders after changes settle (debounced), and again when the app is backgrounded
   useEffect(() => {
     if (!loaded) return;
     const t = setTimeout(() => {
-      syncReminders(reminder).catch(() => {});
+      void syncReminders(reminder).catch((error) => {
+        console.error("Failed to sync reminder notifications", error);
+      });
     }, 600);
     const sub = AppState.addEventListener("change", (state) => {
-      if (state === "background") syncReminders(reminder).catch(() => {});
+      if (state === "background") {
+        void syncReminders(reminder).catch((error) => {
+          console.error("Failed to sync reminder notifications", error);
+        });
+      }
     });
     return () => {
       clearTimeout(t);

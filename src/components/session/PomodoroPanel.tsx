@@ -115,7 +115,7 @@ export default function PomodoroPanel({
         ))}
       </View>
       <Text style={s.hint}>
-        Each focus block is saved to this topic with your note. Breaks aren't
+        Each focus block is saved to this topic with your note. Breaks aren&apos;t
         logged.
       </Text>
 

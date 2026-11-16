@@ -19,7 +19,7 @@ import { useTheme } from "../../theme/ThemeContext";
 import TimePickerSheet from "../TimePickerSheet";
 import { createSessionStyles } from "./styles";
 
-const HOURS = Array.from({ length: 13 }, (_, i) => i);
+const HOURS = Array.from({ length: 25 }, (_, i) => i);
 const MINUTES = Array.from({ length: 60 }, (_, i) => i);
 
 export default function ManualPanel({

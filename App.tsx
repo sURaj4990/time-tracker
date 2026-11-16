@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
+import { ActivityIndicator, Text, View } from "react-native";
 import {
   NavigationContainer,
   DefaultTheme,
@@ -21,7 +21,7 @@ import SettingsScreen from "./src/screens/SettingsScreen";
 import SettingsButton from "./src/components/SettingsButton";
 import React from "react";
 import { AppSettingsProvider } from "./src/settings/AppSettings";
-import * as NavigationBar from "expo-navigation-bar";
+import { NavigationBar } from "expo-navigation-bar";
 
 const Tab = createBottomTabNavigator();
 const Root = createNativeStackNavigator();
@@ -119,20 +119,9 @@ function AppNavigator() {
     },
   };
 
-  useEffect(() => {
-    const setNavButtonStyle =
-      (NavigationBar as any).setButtonStyleAsync ??
-      (NavigationBar as any).setButtonStyle;
-
-    if (typeof setNavButtonStyle === "function") {
-      Promise.resolve(
-        setNavButtonStyle(resolved === "dark" ? "light" : "dark"),
-      ).catch(() => {});
-    }
-  }, [colors.background, resolved]);
-
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <NavigationBar style={resolved === "dark" ? "dark" : "light"} />
       <StatusBar style={resolved === "dark" ? "light" : "dark"} />
       <NavigationContainer theme={navTheme}>
         <Root.Navigator>
@@ -150,14 +139,45 @@ function AppNavigator() {
 
 export default function App() {
   const [ready, setReady] = useState(false);
+  const [startupError, setStartupError] = useState<string | null>(null);
 
   useEffect(() => {
-    (async () => {
-      await getDb();
-      await seedDomains();
-      setReady(true);
-    })();
+    const initialize = async () => {
+      try {
+        await getDb();
+        await seedDomains();
+        setReady(true);
+      } catch (error) {
+        console.error("Failed to initialize the app", error);
+        setStartupError(
+          error instanceof Error ? error.message : "Unknown initialization error",
+        );
+      }
+    };
+
+    void initialize();
   }, []);
+
+  if (startupError) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          padding: 24,
+          gap: 12,
+          backgroundColor: "#FFFFFF",
+        }}
+      >
+        <Text style={{ fontSize: 18, fontWeight: "600", color: "#111111" }}>
+          Unable to start Time Tracker.
+        </Text>
+        <Text selectable style={{ color: "#666666" }}>
+          {startupError}
+        </Text>
+      </View>
+    );
+  }
 
   if (!ready) {
     return (

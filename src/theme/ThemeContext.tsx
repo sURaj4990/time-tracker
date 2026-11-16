@@ -30,11 +30,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const [mode, setModeState] = useState<ThemeMode>("system");
 
   useEffect(() => {
-    getSetting(SETTING_KEY).then((saved) => {
-      if (saved === "light" || saved === "dark" || saved === "system") {
-        setModeState(saved);
-      }
-    });
+    void getSetting(SETTING_KEY)
+      .then((saved) => {
+        if (saved === "light" || saved === "dark" || saved === "system") {
+          setModeState(saved);
+        }
+      })
+      .catch((error) => {
+        console.error("Failed to load the saved theme", error);
+      });
   }, []);
 
   const resolved = mode === "system" ? systemScheme : mode;

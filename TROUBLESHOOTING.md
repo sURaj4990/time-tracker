@@ -70,9 +70,15 @@ Make sure the screen reads its colours from `useTheme()` and not from fixed valu
 grep -rn "#fff\|#111\|#FFF" src
 ```
 
-### Scroll wheels feel slow on an older phone
+### Scroll wheels feel slow
 
-Close other heavy apps and try again. If it persists, note your phone model and open an issue.
+Wheel scrolling stays native-driven and only updates the selected value when the
+scroll settles. If scrolling still stutters, restart the app with a cleared
+Metro cache and note your phone model and operating system when opening an issue:
+
+```bash
+npx expo start -c
+```
 
 ## Building the APK
 

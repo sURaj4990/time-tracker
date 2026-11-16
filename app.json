@@ -5,11 +5,6 @@
     "version": "1.0.0",
     "userInterfaceStyle": "automatic",
     "icon": "./assets/icon.png",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#4F46E5"
-    },
     "android": {
       "package": "com.yourname.timetracker",
       "versionCode": 3,

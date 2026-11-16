@@ -252,7 +252,7 @@ export default function SettingsScreen() {
         )}
       </View>
       <Text style={styles.hint}>
-        You'll get a reminder at this time on days nothing has been logged yet.
+        You&apos;ll get a reminder at this time on days nothing has been logged yet.
       </Text>
 
       <Text style={styles.section}>Data</Text>

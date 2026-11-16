@@ -1,5 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  NativeScrollEvent,
+  NativeSyntheticEvent,
   ScrollView,
   StyleSheet,
   Text,
@@ -8,8 +10,12 @@ import {
 import type { ElementRef } from "react";
 import { useTheme } from "../theme/ThemeContext";
 import { getWheelIndex, WHEEL_ITEM_HEIGHT } from "../lib/wheel";
+import React from "react";
 
 export const ITEM_H = WHEEL_ITEM_HEIGHT;
+
+// Wait for scroll events to go quiet before settling when no momentum event follows.
+const SETTLE_DELAY_MS = 120;
 
 type Props = {
   values: number[];
@@ -28,28 +34,71 @@ export default function Wheel({
 }: Props) {
   const { colors } = useTheme();
   const ref = useRef<ElementRef<typeof ScrollView>>(null);
-  const indexFromValue = Math.max(0, values.indexOf(value));
 
-  // Keep the highlighted item in sync after scrolling without rendering every row per gesture.
+  const indexFromValue = Math.max(0, values.indexOf(value));
   const [liveIndex, setLiveIndex] = useState(indexFromValue);
   const liveRef = useRef(indexFromValue);
 
-  // Follows the saved value when it changes from outside (for example, when the sheet opens)
+  const readyRef = useRef(false);
+  const momentumRef = useRef(false);
+  const settlePendingRef = useRef(false);
+  const latestOffsetYRef = useRef(indexFromValue * ITEM_H);
+  const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearSettleTimer = () => {
+    if (settleTimer.current) {
+      clearTimeout(settleTimer.current);
+      settleTimer.current = null;
+    }
+  };
+
+  const jumpTo = (index: number, animated: boolean) => {
+    ref.current?.scrollTo({ y: index * ITEM_H, animated });
+  };
+
+  const scheduleSettle = () => {
+    clearSettleTimer();
+    settleTimer.current = setTimeout(() => {
+      if (!momentumRef.current) settle(latestOffsetYRef.current);
+    }, SETTLE_DELAY_MS);
+  };
+
+  // Sets the starting position once the items have been measured.
+  // contentOffset alone isn't reliable inside a Modal on Android.
+  const onContentSizeChange = () => {
+    if (readyRef.current) return;
+    readyRef.current = true;
+    jumpTo(liveRef.current, false);
+  };
+
+  // Follows the saved value when it changes from outside (for example, when the sheet reopens)
   useEffect(() => {
+    if (!readyRef.current) return;
     if (indexFromValue !== liveRef.current) {
       liveRef.current = indexFromValue;
       setLiveIndex(indexFromValue);
-      ref.current?.scrollTo({ y: indexFromValue * ITEM_H, animated: false });
+      jumpTo(indexFromValue, false);
     }
   }, [indexFromValue]);
 
-  const onSettle = (offsetY: number) => {
+  useEffect(() => clearSettleTimer, []);
+
+  // Commits the centred item as the value
+  const settle = (offsetY: number) => {
     if (values.length === 0) return;
+    clearSettleTimer();
+    settlePendingRef.current = false;
     const i = getWheelIndex(offsetY, values.length);
     liveRef.current = i;
     setLiveIndex(i);
-    ref.current?.scrollTo({ y: i * ITEM_H, animated: false });
     if (values[i] !== value) onChange(values[i]);
+  };
+
+  // Keep the latest offset for the no-momentum fallback without re-rendering every row.
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = e.nativeEvent.contentOffset.y;
+    latestOffsetYRef.current = offsetY;
+    if (settlePendingRef.current && !momentumRef.current) scheduleSettle();
   };
 
   return (
@@ -63,17 +112,23 @@ export default function Wheel({
         showsVerticalScrollIndicator={false}
         snapToInterval={ITEM_H}
         decelerationRate="fast"
-        contentOffset={{ x: 0, y: indexFromValue * ITEM_H }}
+        scrollEventThrottle={16}
         contentContainerStyle={{ paddingVertical: ITEM_H }}
-        onMomentumScrollEnd={(e) =>
-          onSettle(e.nativeEvent.contentOffset.y)
-        }
+        onContentSizeChange={onContentSizeChange}
+        onScroll={onScroll}
+        onMomentumScrollBegin={() => {
+          momentumRef.current = true;
+          clearSettleTimer();
+        }}
+        onMomentumScrollEnd={(e) => {
+          momentumRef.current = false;
+          latestOffsetYRef.current = e.nativeEvent.contentOffset.y;
+          settle(e.nativeEvent.contentOffset.y);
+        }}
         onScrollEndDrag={(e) => {
-          // Avoid per-item React renders during the gesture; native scrolling stays smooth.
-          const velocity = e.nativeEvent.velocity?.y ?? 0;
-          if (Math.abs(velocity) < 0.01) {
-            onSettle(e.nativeEvent.contentOffset.y);
-          }
+          latestOffsetYRef.current = e.nativeEvent.contentOffset.y;
+          settlePendingRef.current = true;
+          scheduleSettle();
         }}
       >
         {values.map((v, i) => {

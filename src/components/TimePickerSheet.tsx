@@ -55,8 +55,14 @@ export default function TimePickerSheet({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.card} onPress={() => {}}>
+      <View style={styles.backdrop}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityRole="button"
+          accessibilityLabel="Close time picker"
+        />
+        <View style={styles.card}>
           <Text style={styles.title}>{title}</Text>
 
           <View style={styles.wheels}>
@@ -89,8 +95,8 @@ export default function TimePickerSheet({
               <Text style={styles.doneText}>Done</Text>
             </Pressable>
           </View>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }

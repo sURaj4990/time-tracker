@@ -4,6 +4,10 @@ A simple, private time tracker for people building skills across several areas a
 
 All data stays on your device. There is no account, no server, and no tracking.
 
+## Download for Android
+
+Get the [latest APK from GitHub Releases](https://github.com/sURaj4990/time-tracker/releases/latest), or [browse all available versions](https://github.com/sURaj4990/time-tracker/releases). On a release page, download the APK listed under **Assets**.
+
 ## Features
 
 - **Domains and topics:** organise work into areas like Learning or Fitness, each with subtopics.
